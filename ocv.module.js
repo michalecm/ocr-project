@@ -15,7 +15,7 @@ async function convHEICtoPNG(img){
     
     console.log("ehrehrehreuhtuh")
 
-    promisify(fs.writeFileSync)(imgPath + imgExt, outputBuffer)
+    await promisify(fs.writeFileSync)(imgPath + imgExt, outputBuffer)
     console.log('jdsfjisf')
     return [imgPath, imgExt];
   } 
@@ -42,4 +42,4 @@ function processImg(img){
 
 module.exports = {
     processImg
-}
+} 
