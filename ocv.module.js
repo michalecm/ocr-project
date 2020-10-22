@@ -15,12 +15,12 @@ async function convHEICtoPNG(img){
     
     console.log("ehrehrehreuhtuh")
 
-    await promisify(fs.writeFileSync)(imgPath + imgExt, outputBuffer)
+    await promisify(fs.writeFile)(imgPath + imgExt, outputBuffer)
     console.log('jdsfjisf')
     return [imgPath, imgExt];
   } 
 
-function processImg(img){
+async function processImg(img){
     const imgPath = img.substring(0, img.lastIndexOf('.'));
     const imgExt = img.substring(img.lastIndexOf('.'), img.length);
     let fpath = [imgPath, imgExt]
@@ -28,15 +28,15 @@ function processImg(img){
     if(imgExt === ".HEIC"){
         console.log("ehrehreh633636reuhtuh")
 
-        fpath = convHEICtoPNG(img);
+        fpath = await convHEICtoPNG(img);
         console.log(fpath[0] + " " + fpath[1])
     }
     
     console.log("imread will be empty MAT")
     let src = cv.imread(fpath[0] + fpath[1]);
     let tmp = src.bgrToGray();
-    let dest = tmp.threshold(220, 255, cv.THRESH_OTSU);
-    cv.imwriteAsync(fpath[0] + 'c2BW' + fpath[1], dest)
+    let dest = tmp.threshold(248, 255, cv.THRESH_OTSU);
+    await cv.imwriteAsync(fpath[0] + 'c2BW' + fpath[1], dest)
     return fpath[0] + 'c2BW' + fpath[1];    
 }
 

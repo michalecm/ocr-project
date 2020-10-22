@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
 const upload = multer({storage: storage});
 
 app.post('/receipts/upload', upload.single('uploadedImage'),
-     (req, res) => {
+     async (req, res) => {
         
         console.log(req.file)
         try {
@@ -25,7 +25,7 @@ app.post('/receipts/upload', upload.single('uploadedImage'),
                 logger : m => console.log(m)
             });
 
-            const imgToProc =  mycv.processImg('uploads/'+req.file.filename);
+            let imgToProc = await mycv.processImg('uploads/'+req.file.filename);
             console.log(imgToProc);
             (async () => {
                 await worker.load();
