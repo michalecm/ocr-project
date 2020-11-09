@@ -1,4 +1,4 @@
-const { THRESH_BINARY, THRESH_BINARY_INV, CV_16S, waitKey } = require('opencv4nodejs');
+const { THRESH_BINARY, THRESH_BINARY_INV, CV_16S, waitKey, CV_8UC1 } = require('opencv4nodejs');
 const cv = require('opencv4nodejs')
 const { promisify } = require('util');
 const fs = require('fs');
@@ -17,7 +17,7 @@ async function convHEICtoPNG(img){
 
     await promisify(fs.writeFile)(imgPath + imgExt, outputBuffer)
     console.log('jdsfjisf')
-    return [imgPath, imgExt];
+    return [imgPath, imgExt]; 
   } 
 
 async function processImg(img){
@@ -35,9 +35,10 @@ async function processImg(img){
     console.log("imread will be empty MAT")
     let src = cv.imread(fpath[0] + fpath[1]);
     let tmp = src.bgrToGray();
-    let dest = tmp.threshold(248, 255, cv.THRESH_OTSU);
+    let dest = tmp.threshold(254, 255, cv.THRESH_TRUNC); 
+    dest = dest.threshold(248, 255, cv.THRESH_OTSU);
     await cv.imwriteAsync(fpath[0] + 'c2BW' + fpath[1], dest)
-    return fpath[0] + 'c2BW' + fpath[1];    
+    return [fpath[0].substring(0, fpath[0].lastIndexOf('/')+1), fpath[0].substring(fpath[0].lastIndexOf('/')+1, fpath[0].length), 'c2BW', fpath[1]];
 }
 
 module.exports = {
