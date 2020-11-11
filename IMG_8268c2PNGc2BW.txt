@@ -5,7 +5,7 @@ Misso Italkereskedés .
 ADÓSZÁM: 14730597-2-42 .
 ----- - NYUGTÁA ----- Í
 Étolaj 11 Tiszacsepp 499 C15
-Étolaj 11 Tiszacsepp 499 Ci5 i
+Étolaj 11 Tiszacsepp 499 C15 i
 ÖSSZESEN; 998 Ft ,
 — KÉSZPÉNZ : 1 000 Ft '
 KEREKÍTÉS : 2 Ft

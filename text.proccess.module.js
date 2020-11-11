@@ -8,8 +8,8 @@ class TextProcessor {
 
     WORDARRAYS = {
         ADOSZAM : ['ALDÓSZÁM', 'ADÓSZÁM', 'ÁDÓSZÁM', 'ADOSZÁM'],
-        OSSZESEN : ['ÖSSZESEN', 'ÖGSZEGEN', 'ÖS9/ESEN', 'Ö99/ESEN', 'ŐSSZES'],
-        BANKKARTYA : ['BANKKÁRTYA', 'BANKKÁRTYA', 'BANKKÁRTYÁ', 'BDANKKÁRTYA'],
+        OSSZESEN : ['öSSZESEN', 'ÖSSZESEN', 'ÖGSZEGEN', 'ÖS9/ESEN', 'Ö99/ESEN', 'ŐSSZES', "0SSZESEN"],
+        BANKKARTYA : ['BANKKÁRTYA', 'BANKKÁRTYA', 'BANKKÁRTYÁ', 'BDANKKÁRTYA', 'VISSZAJÁRÓ'],
         NYUGTASZAM : ['NYUGTASZÁM', 'NYUGTASZÁM']
     }
 
@@ -54,9 +54,9 @@ class TextProcessor {
                         console.log(`${wordMatches} checking against ${line}`)
                         console.log(`Setting ${section} -- ${this.receiptSections[section].index} to ${i}`)
                         this.receiptSections[section].index = i;
-                        console.log('poop2')
+                        console.log("hitting")
 
-                    }else {console.log('poop not work')}
+                    }else {console.log('not work')}
                 }
             }
         });
@@ -82,7 +82,7 @@ class TextProcessor {
 
     splitReceipt(){
         if(!this.goodToGo()){
-            console.log("WE ARE REACHING THIS THROW STATEMENT POOPY PANTS")
+            console.log("WE ARE REACHING THIS THROW STATEMENT")
             throw "Cannot process receipt because the data is incomplete"
         }
 
@@ -116,6 +116,208 @@ class TextProcessor {
         this.receiptPostProc.purchaseStoreID = tmp;
     }
     
+
+    processOsszesen(){
+        console.log(`has undefined????? ${this.receiptSections.OSSZESEN.content.includes(undefined)}`)
+        console.log('entering processOsszesen')
+        // const clean = function(line){return line.replace(/[^a-zA-Z0-9 ]/g, "").trim().split(" ")}
+        const cleanPrice = function(arr){return arr.join("").replace(/\D/g,'')}
+        const cleanName = function(name){return name.join(" ").trim()}
+        const regex = /^[A-Z][A-Z][0-9]$|^[A-Z][0-9][A-Z]$|^[A-Z][0-9][0-9]$/
+        let length = this.receiptSections.OSSZESEN.content.length
+        let firstLineFilters = ["m !", "nyugta", "MI —", "NYUGTA", "NYUGTÁ", "mugy", "MUGY", "_"]
+        let products = {};
+        let total = 0;
+        let caseSpar = 0;
+        let caseMisso = 1;
+        let thousandsPlace = /^[0-9]{1,2}$/
+        let price = 0;
+        let name = '';
+        
+        do{
+            if(firstLineFilters.some(word => this.receiptSections.OSSZESEN.content[0].includes(word))){
+            console.log('removing bullshit line')
+            this.receiptSections.OSSZESEN.content.shift();
+            length--;
+            }
+            else {
+                break;
+            }
+        }while(this.receiptSections.OSSZESEN.content[0].match(regex) === null)
+        
+
+        let item1 = []
+        let item2 = []
+        
+        for(let x = 0; x < length; x++){
+            item1 = this.receiptSections.OSSZESEN.content[x]
+            console.log(item1)
+            price = 0
+            name = ''
+            if(/[^a-zA-Z0-9\u00c0-\u024F ]/g.test(item1)){
+                console.log('cleaning item1')
+                item1 = item1.replace(/[^a-zA-Z0-9\u00c0-\u024F ]/g, "")
+            }
+            item1 = item1.trim().split(" ").filter(function(e){return e});
+            console.log(item1)
+
+            if(x === length - 1){ x++; console.log('we are on last line')} // we are on the last line 
+
+
+            else if(x < length - 1){ // we have at least two lines left
+
+                item2 = this.receiptSections.OSSZESEN.content[x+1]
+
+                if(/[^a-zA-Z0-9\u00c0-\u024F ]/g.test(item2)){
+                    console.log('cleaning item2')
+                    item2 = item2.replace(/[^a-zA-Z0-9\u00c0-\u024F ]/g, "")
+                }
+                item2 = item2.trim().split(" ").filter(function(e){return e});
+                console.log(item2)
+
+                console.log(`does the firsts equal eachother? ${item1[0] === item2[0]}`)
+                let count1 = item1.findIndex(element => regex.test(element.trim()))
+                console.log(`${count1}`)
+                let count2 = item2.findIndex(element => regex.test(element.trim()))
+                console.log(`${count2}`)
+            
+
+                let secondLineNotProduct = count2 === -1 ? true : false;
+                console.log(`here is index of item1 C00 ${count1} and index of item2 C00 ${count2} and if item2 is a product ${secondLineNotProduct}`)
+
+                console.log(`if ${count1} > ${item1.length/2} = ${count1 > item1.length/2}`)
+                console.log(`elseif ${x} --- ${count1} < ${item1.length/2} = ${count1 < item1.length/2} ||| ${count1} > 0 = ${count1 >= 0}`)
+                
+                if(count1 > item1.length/2){ // misso receipt (single line product or weighed)
+                    console.log("determined it is a misso receipt")
+                    item1.length = count1; // we don't need the regex matched bit nor do we need anything after
+                    // now we need to collect the data
+                    console.log(`item1 without C00 ${item1}`)
+                    
+                    if(secondLineNotProduct && item2.includes("Ftdb")){ // weighed product // two lines
+                        console.log(`${item2} is not a product`)
+                        x++
+                    }
+                    // else item2 is a product itself so we skip
+                    //process item1
+                    //hundreds vs thousands
+
+                    // while(!item1[item1.length - 1].match(/^\d*$/g)){
+                    //     item1.pop()
+                    // }
+
+                    if(item1[item1.length - 2].match(thousandsPlace)) {
+                        console.log("has a thousands place")
+                        price = cleanPrice(item1.splice(item1.length-2, item1.length))
+                        name = cleanName(item1)
+                    }
+                    
+                    else {
+                        console.log("just has hundreds place")
+                        price = cleanPrice(item1.splice(item1.length - 1))
+                        name = cleanName(item1)
+                    }
+
+                    if(!products[name]){
+                        products[name] = []
+                    }
+
+                    products[name].push(price)
+                
+                }
+
+                else if(count1 < item1.length/2 && count1 >= 0){ // spar receipt
+                    item1 = item1.splice(count1 + 1, item1.length)
+                    if(secondLineNotProduct) { // weighed // we know the price is on it, it doesn't have a C00 // two lines
+                        //get price
+                        while(!item2[item2.length - 1].match(/^\d*$/g)){
+                            item2.pop()
+                        }
+
+                        if(item2[item2.length - 2].match(thousandsPlace)) {
+                            price = cleanPrice(item2.splice(item2.length-2, item2.length))
+                            name = cleanName(item1)
+                        }
+                        
+                        else {
+                            price = cleanPrice(item2.splice(item2.length - 1))
+                            name = cleanName(item1)
+                        }
+    
+                        x++
+                    }
+
+                    else { // single line spar
+                        while(!item1[item1.length - 1].match(/^\d*$/g)){
+                            item1.pop()
+                        }
+
+                        if(item1[item1.length - 2].match(thousandsPlace)) {
+                            price = cleanPrice(item1.splice(item1.length-2, item1.length))
+                            name = cleanName(item1)
+                        }
+                        
+                        else {
+                            price = cleanPrice(item1.splice(item1.length - 1))
+                            name = cleanName(item1)
+                        }
+
+                    }
+                    //process item1
+                    //check thousands place price at end or hundreds only
+
+                    if(!products[name]){
+                        products[name] = []
+                    }
+
+                    products[name].push(price)
+                    console.log(`${name} -- ${products[name]}`)
+                    
+                }
+
+                else { // item1 is a text-only line, product info in item2 also misso
+                    //process item2
+                    if(!secondLineNotProduct) { //is a product because first line isn't
+                        //process, remove C00
+                        //get price
+                        item2.length = count2;
+
+                        // while(!item2[item2.length - 1].match(/^\d*$/g)){
+                        //     item2.pop()
+                        // }
+
+                        if(item2[item2.length - 2].match(thousandsPlace)) {
+                            price = cleanPrice(item2.splice(item2.length-2, item2.length))
+                            name = cleanName(item1)
+                        }
+                        
+                        else {
+                            price = cleanPrice(item2.splice(item2.length - 1))
+                            name = cleanName(item1)
+                        }
+
+                        if(!products[name]){
+                            products[name] = []
+                        }
+    
+                        products[name].push(price)
+
+                    }
+
+                    x++
+                }
+            }
+
+            else {
+
+                console.log('idk what is happening these days anymore')
+            }
+        }
+
+        this.receiptPostProc.purchaseItems = Object.assign({}, products)
+    }
+
+/*
     processOsszesen(){
         let filters = ["m !", "nyugta"]
         let products = {};
@@ -142,14 +344,10 @@ class TextProcessor {
                 console.log(tmp[0].match(regex))
                 console.log(`tmp first 3 chars ${tmp[0]} is/isnot matching ${regex} --- ${tmp[0].match(regex)}`)
                 //is our first string in the array 3 characters??
-                let count = 0;
-                tmp.forEach(word => {word.search(regex) === -1 ? count++ : count = count})
-                if(count > 0)
                 if(tmp[0].length === 3 && ((tmp[0].match(regex) !== null) || (tmp[0].match(/[A-Z]{3}/g) !== null))){
                     console.log('the first string in our line is 3 characters long, so we are removing it')
                     try{tmp.shift()}
                     catch{(err) => {
-                        console.log("my big stinky poopy pants")
                     }};
                     console.log("shifted")
                     //is our second line's first string 3 characters?????
@@ -227,11 +425,13 @@ class TextProcessor {
         
         for(product in products){
             console.log(`${product} --- ${products[product]}`)
-        }
-    }
+        }*/
+    //}
+    
+    
 
     processBankkartya(){
-        let total = this.receiptSections.BANKKARTYA.content[0].trim().replace(/\D/g,'').replace(/\s/g,'')
+        let total = this.receiptSections.BANKKARTYA.content[this.receiptSections.BANKKARTYA.content.length-1].trim().replace(/\D/g,'').replace(/\s/g,'')
         this.receiptPostProc.purchaseTotal = total
         console.log(total)
     }
@@ -249,7 +449,7 @@ class TextProcessor {
         this.processOsszesen()
         console.log("finishing calling process OSZESSEN")
         this.processBankkartya()
-        this.processNyugatszam()
+        //this.processNyugatszam()
     }
 
 

@@ -50,8 +50,8 @@ app.post('/receipts/upload', upload.single('uploadedImage'),
                 console.log('receipt split')
                 processor.processReceiptSegments();
                 console.log('receipts parts process')
-                processor.toString();
-                console.log('tostring')
+                //processor.toString();
+                //console.log('tostring')
                 res.set('content-type', 'application/json')
                 res.set('charset', 'UTF-32')
                 res.set('status', 200)
